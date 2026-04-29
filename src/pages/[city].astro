@@ -1,0 +1,364 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import QuoteWidget from '../components/QuoteWidget.astro';
+import PriceTable from '../components/PriceTable.astro';
+import ProcessSteps from '../components/ProcessSteps.astro';
+import FAQ from '../components/FAQ.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import { siteConfig } from '../../site.config';
+import { getAllCities, getCityBySlug, getNearbyCities } from '../lib/cities';
+import localContentRaw from '../data/local-content.json';
+
+const localContent = localContentRaw as Record<string, {
+  intro: string;
+  local_tip: string;
+  history_anecdote: string;
+  faq_local: { question: string; answer: string }[];
+  market_data: string;
+  external_links: { label: string; url: string; desc: string }[];
+  internal_links: { label: string; url: string }[];
+}>;
+
+export function getStaticPaths() {
+  const allCities = getAllCities();
+  return allCities.map(city => ({
+    params: { city: city.slug },
+    props: { city },
+  }));
+}
+
+const { city } = Astro.props;
+const nearbyCities = getNearbyCities(city, 8);
+const lc = localContent[city.slug];
+
+// SEO
+const title = siteConfig.niche.seoTitleTemplate
+  .replace('{city}', city.name)
+  .replace('{zip}', city.zip);
+const description = siteConfig.niche.metaDescTemplate
+  .replace('{city}', city.name)
+  .replace('{zip}', city.zip);
+
+// Schema.org
+const faqItems = [
+  ...siteConfig.faq.slice(0, 3),
+  ...(lc?.faq_local ? lc.faq_local.map(f => ({ q: f.question, a: f.answer })) : []),
+];
+
+const jsonLd = [
+  {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    "name": `${siteConfig.niche.name} à ${city.name}`,
+    "description": description,
+    "areaServed": { "@type": "City", "name": city.name, "postalCode": city.zip },
+    "provider": {
+      "@type": "LocalBusiness",
+      "name": siteConfig.name,
+      "url": `https://www.${siteConfig.domain}/${city.slug}`,
+    },
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Accueil", "item": `https://www.${siteConfig.domain}` },
+      { "@type": "ListItem", "position": 2, "name": "Annuaire", "item": `https://www.${siteConfig.domain}/annuaire` },
+      { "@type": "ListItem", "position": 3, "name": city.deptName, "item": `https://www.${siteConfig.domain}/departement/${city.deptCode.toLowerCase()}` },
+      { "@type": "ListItem", "position": 4, "name": city.name },
+    ]
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": faqItems.map(f => ({
+      "@type": "Question",
+      "name": f.q.replace('{city}', city.name),
+      "acceptedAnswer": { "@type": "Answer", "text": f.a.replace('{city}', city.name) }
+    }))
+  }
+];
+---
+
+<BaseLayout
+  title={title}
+  description={description}
+  canonical={`/${city.slug}`}
+  jsonLd={jsonLd}
+>
+  <!-- Hero -->
+  <section class="gradient-hero text-white py-12 md:py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <Breadcrumbs items={[
+        { label: "Annuaire", href: "/annuaire" },
+        { label: city.deptName, href: `/departement/${city.deptCode.toLowerCase()}` },
+        { label: city.name, href: `/${city.slug}` },
+      ]} />
+
+      <div class="grid lg:grid-cols-5 gap-10 items-start mt-6">
+        <div class="lg:col-span-3">
+          <h1 class="text-2xl md:text-4xl font-extrabold leading-tight mb-6">
+            Terrasse à {city.name} ({city.zip})<br/>
+            <span class="text-brand-200 text-xl md:text-2xl font-bold">Prix & Devis Gratuit 2026</span>
+          </h1>
+
+          <div class="mb-8">
+            <p class="text-lime-200 leading-relaxed" set:html={lc?.intro || `Comparez jusqu'à 3 devis de terrassiers qualifiés à ${city.name} (${city.deptName}). Service gratuit et sans engagement.`} />
+          </div>
+
+          <div class="grid sm:grid-cols-2 gap-3 mb-8">
+            <div class="flex items-start gap-2 bg-white/5 backdrop-blur-sm rounded-lg px-4 py-3 border border-white/10">
+              <span class="text-green-400 mt-0.5">✓</span>
+              <span class="text-sm text-lime-200">Terrassiers <strong class="text-white">certifiés Qualibat</strong> dans le {city.deptName}</span>
+            </div>
+            <div class="flex items-start gap-2 bg-white/5 backdrop-blur-sm rounded-lg px-4 py-3 border border-white/10">
+              <span class="text-green-400 mt-0.5">✓</span>
+              <span class="text-sm text-lime-200"><strong class="text-white">Bois, composite, pierre</strong> — tous matériaux</span>
+            </div>
+            <div class="flex items-start gap-2 bg-white/5 backdrop-blur-sm rounded-lg px-4 py-3 border border-white/10">
+              <span class="text-green-400 mt-0.5">✓</span>
+              <span class="text-sm text-lime-200">Garantie <strong class="text-white">décennale</strong> obligatoire</span>
+            </div>
+            <div class="flex items-start gap-2 bg-white/5 backdrop-blur-sm rounded-lg px-4 py-3 border border-white/10">
+              <span class="text-green-400 mt-0.5">✓</span>
+              <span class="text-sm text-lime-200">Normes : <strong class="text-white">DTU 51.4, NF P 06-001</strong></span>
+            </div>
+          </div>
+
+          <a href="/devis" class="inline-block bg-accent-500 hover:bg-accent-600 text-white font-bold px-6 py-3.5 rounded-xl transition-colors shadow-lg text-base">
+            {siteConfig.niche.emoji} Obtenir 3 Devis Terrasse à {city.name}
+          </a>
+        </div>
+
+        <div class="lg:col-span-2" id="devis-form">
+          <div class="sticky top-20">
+            <QuoteWidget keyword={`${siteConfig.niche.name} ${city.name}`} />
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content Area -->
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10">
+
+    {/* Section 1: Local Expert Content */}
+    {lc && (
+      <section class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6">
+          🌿 Construction de terrasse à {city.name} ({city.deptCode})
+        </h2>
+        <div class="prose max-w-none text-gray-600 space-y-4">
+          <p set:html={lc.intro} />
+
+          {lc.history_anecdote && (
+            <div class="bg-lime-50 border-l-4 border-lime-500 p-4 rounded-r-lg my-6">
+              <h3 class="text-lime-900 font-bold text-base mb-2">📖 Le saviez-vous ?</h3>
+              <p class="text-lime-800 text-sm" set:html={lc.history_anecdote} />
+            </div>
+          )}
+
+          <div class="bg-orange-50 border-l-4 border-orange-500 p-4 rounded-r-lg my-6">
+            <h3 class="text-orange-900 font-bold text-base mb-2">💡 Conseil terrassier — {city.name}</h3>
+            <p class="text-orange-800 text-sm" set:html={lc.local_tip} />
+          </div>
+        </div>
+      </section>
+    )}
+
+    {/* Section 2: Market Data */}
+    {lc?.market_data && (
+      <section class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl border border-green-200 p-6 md:p-8">
+        <h2 class="text-xl font-bold text-gray-900 mb-3">
+          📊 Baromètre des prix terrasse — {city.deptName} ({city.deptCode})
+        </h2>
+        <p class="text-gray-700 leading-relaxed" set:html={lc.market_data} />
+      </section>
+    )}
+
+    {/* Section 3: Price Table */}
+    <section>
+      <p class="text-sm text-gray-500 mb-4">
+        💡 Les prix ci-dessous sont des moyennes nationales 2026. À {city.name} ({city.region}),
+        les tarifs peuvent varier selon le matériau, le terrain et la surface de terrasse.
+      </p>
+      <PriceTable />
+    </section>
+
+    {/* Section 4: Technical Guide — 100% terrasse */}
+    <section class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
+      <h2 class="text-2xl font-bold text-gray-900 mb-6">
+        ⚙️ Guide technique : construire sa terrasse à {city.name}
+      </h2>
+      <div class="prose max-w-none text-gray-600 space-y-6">
+
+        <div>
+          <h3 class="text-lg font-bold text-gray-900 mb-2">Les matériaux de terrasse</h3>
+          <div class="grid sm:grid-cols-2 gap-4 mt-3">
+            <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
+              <h4 class="font-bold text-gray-900">🪵 Bois naturel</h4>
+              <p class="text-sm text-gray-600 mt-1">Pin classe 4, mélèze, douglas ou bois exotique (ipé, cumaru). Chaleur et authenticité. Entretien annuel requis (saturateur, dégriseur). Durée de vie 15-40 ans selon l'essence.</p>
+              <span class="text-xs text-brand-600 font-medium mt-2 block">40 – 150 €/m² posé</span>
+            </div>
+            <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
+              <h4 class="font-bold text-gray-900">🔧 Composite (WPC)</h4>
+              <p class="text-sm text-gray-600 mt-1">Mélange bois-polymère. Aspect bois sans entretien. Résistant aux UV, à l'eau et aux insectes. Ne grise pas, ne se fend pas. Coloris variés.</p>
+              <span class="text-xs text-brand-600 font-medium mt-2 block">60 – 120 €/m² posé</span>
+            </div>
+            <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
+              <h4 class="font-bold text-gray-900">🪨 Pierre naturelle</h4>
+              <p class="text-sm text-gray-600 mt-1">Travertin, granit, ardoise, pierre bleue. Ultra-durable (30-50 ans), esthétique intemporelle. Pose sur dalle béton. Résiste au gel selon la pierre.</p>
+              <span class="text-xs text-brand-600 font-medium mt-2 block">60 – 200 €/m² posé</span>
+            </div>
+            <div class="bg-gray-50 rounded-xl p-4 border border-gray-100">
+              <h4 class="font-bold text-gray-900">🏗️ Carrelage grès cérame</h4>
+              <p class="text-sm text-gray-600 mt-1">Carrelage extérieur antidérapant R11/R12. Imitation bois, béton ou pierre. Ultra-résistant au gel, facile d'entretien. Finition contemporaine.</p>
+              <span class="text-xs text-brand-600 font-medium mt-2 block">60 – 140 €/m² posé</span>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h3 class="text-lg font-bold text-gray-900 mb-2">Terrasse vs autres aménagements extérieurs</h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm border-collapse">
+              <thead>
+                <tr class="bg-gray-50 text-gray-500 border-b border-gray-200">
+                  <th class="px-4 py-3 text-left font-semibold">Aménagement</th>
+                  <th class="px-4 py-3 text-left font-semibold">Prix moyen</th>
+                  <th class="px-4 py-3 text-left font-semibold">Durée de vie</th>
+                  <th class="px-4 py-3 text-left font-semibold">Avantages</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                <tr class="bg-lime-50 font-semibold">
+                  <td class="px-4 py-3 text-lime-800">✅ Terrasse</td>
+                  <td class="px-4 py-3 text-lime-700">40 – 200 €/m²</td>
+                  <td class="px-4 py-3 text-lime-700">15 – 50 ans</td>
+                  <td class="px-4 py-3 text-lime-700">Confort, valorisation, polyvalence</td>
+                </tr>
+                <tr>
+                  <td class="px-4 py-3">Pergola</td>
+                  <td class="px-4 py-3">150 – 600 €/m²</td>
+                  <td class="px-4 py-3">15 – 30 ans</td>
+                  <td class="px-4 py-3">Protection solaire, extension ombragée</td>
+                </tr>
+                <tr>
+                  <td class="px-4 py-3">Allée carrossable</td>
+                  <td class="px-4 py-3">30 – 120 €/m²</td>
+                  <td class="px-4 py-3">20 – 40 ans</td>
+                  <td class="px-4 py-3">Accès véhicule, finition soignée</td>
+                </tr>
+                <tr>
+                  <td class="px-4 py-3">Gazon synthétique</td>
+                  <td class="px-4 py-3">20 – 50 €/m²</td>
+                  <td class="px-4 py-3">8 – 15 ans</td>
+                  <td class="px-4 py-3">Vert toute l'année, zéro arrosage</td>
+                </tr>
+                <tr>
+                  <td class="px-4 py-3">Piscine</td>
+                  <td class="px-4 py-3">200 – 800 €/m²</td>
+                  <td class="px-4 py-3">25+ ans</td>
+                  <td class="px-4 py-3">Loisir, valorisation forte du bien</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div>
+          <h3 class="text-lg font-bold text-gray-900 mb-2">Étapes de construction d'une terrasse à {city.name}</h3>
+          <ol class="space-y-3 mt-3 list-decimal list-inside">
+            <li><strong>Étude du terrain</strong> — Le terrassier évalue la nature du sol (argileux, sableux, rocheux), la pente naturelle, le drainage existant et les contraintes d'accès pour définir la technique adaptée.</li>
+            <li><strong>Terrassement et préparation</strong> — Décaissement du terrain, nivellement, compactage du sol, installation d'un géotextile anti-repousse et création de la couche de fondation (gravier, sable stabilisé).</li>
+            <li><strong>Création du support</strong> — Selon la technique : coulage d'une dalle béton (terrasse maçonnée), installation de plots réglables (terrasse sur plots) ou pose de lambourdes sur longrines (terrasse bois/composite).</li>
+            <li><strong>Pose du revêtement</strong> — Pose des lames (bois, composite), dalles (pierre, béton) ou carrelage selon le matériau choisi. Respect des joints de dilatation et des pentes d'évacuation (1-2%).</li>
+            <li><strong>Finitions et accessoires</strong> — Pose des plinthes, nez de marche, éclairage intégré, garde-corps si surélévation. Application du traitement de surface (saturateur bois, hydrofuge pierre).</li>
+          </ol>
+        </div>
+      </div>
+    </section>
+
+    {/* Section 5: Process Steps */}
+    <ProcessSteps />
+
+    {/* Section 6: FAQ */}
+    {lc?.faq_local ? (
+      <FAQ items={[
+        ...siteConfig.faq,
+        ...lc.faq_local.map(f => ({ q: f.question, a: f.answer }))
+      ]} cityName={city.name} />
+    ) : (
+      <FAQ items={siteConfig.faq} cityName={city.name} />
+    )}
+
+    {/* Section 7: External Authority Links */}
+    {lc?.external_links && (
+      <section class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
+        <h2 class="text-xl font-bold text-gray-900 mb-4">
+          🏛️ Ressources officielles — {city.name}
+        </h2>
+        <p class="text-sm text-gray-500 mb-4">Liens utiles pour votre projet de terrasse à {city.name}</p>
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {lc.external_links.map((link) => (
+            <a href={link.url} target="_blank" rel="noopener noreferrer"
+              class="flex items-start gap-3 bg-gray-50 rounded-xl p-4 border border-gray-100 hover:border-brand-300 hover:shadow-sm transition-all group">
+              <span class="text-brand-600 mt-0.5">🔗</span>
+              <div>
+                <span class="font-semibold text-gray-900 group-hover:text-brand-600 text-sm block">{link.label}</span>
+                <span class="text-xs text-gray-400">{link.desc}</span>
+              </div>
+            </a>
+          ))}
+        </div>
+      </section>
+    )}
+
+    {/* Section 8: Internal Links */}
+    {lc?.internal_links && (
+      <section class="bg-brand-50 rounded-2xl border border-brand-100 p-6 md:p-8">
+        <h2 class="text-xl font-bold text-gray-900 mb-4">📚 À lire aussi</h2>
+        <div class="flex flex-wrap gap-2">
+          {lc.internal_links.map((link) => (
+            <a href={link.url}
+              class="bg-white border border-brand-200 rounded-lg px-4 py-2 text-sm font-medium text-brand-700 hover:bg-brand-100 hover:border-brand-300 transition-all">
+              {link.label} →
+            </a>
+          ))}
+        </div>
+      </section>
+    )}
+
+    {/* Section 9: Nearby Cities */}
+    <section>
+      <h2 class="text-2xl font-bold text-gray-900 mb-2">
+        📍 {siteConfig.niche.nameShort} près de {city.name}
+      </h2>
+      <p class="text-gray-500 text-sm mb-6">Nos terrassiers interviennent aussi dans ces villes du {city.deptName}</p>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {nearbyCities.map((nc) => (
+          <a href={`/${nc.slug}`}
+            class="bg-white border border-gray-200 rounded-xl px-4 py-3 hover:border-brand-300 hover:shadow-md transition-all group text-center">
+            <span class="font-semibold text-gray-900 group-hover:text-brand-600 text-sm block">{nc.name}</span>
+            <span class="text-xs text-gray-400">{nc.zip} • {nc.deptName}</span>
+          </a>
+        ))}
+      </div>
+    </section>
+
+    {/* Section 10: Final CTA */}
+    <section class="pb-20 md:pb-0">
+      <div class="bg-gradient-to-r from-brand-600 to-brand-800 rounded-2xl p-8 text-center text-white">
+        <h2 class="text-xl md:text-2xl font-bold mb-3">
+          Obtenez vos 3 devis Terrasse à {city.name}
+        </h2>
+        <p class="text-lime-200 mb-5 text-sm">
+          Gratuit • Sans engagement • Terrassiers qualifiés du {city.deptName}
+        </p>
+        <a href="/devis" class="inline-block bg-white text-brand-700 font-bold px-8 py-3.5 rounded-xl hover:bg-brand-50 transition-colors shadow-lg">
+          Demander mes devis →
+        </a>
+      </div>
+    </section>
+  </div>
+</BaseLayout>

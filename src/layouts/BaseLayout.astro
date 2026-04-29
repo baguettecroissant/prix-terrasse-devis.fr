@@ -1,0 +1,201 @@
+---
+import { siteConfig } from '../../site.config';
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description?: string;
+  canonical?: string;
+  ogType?: string;
+  noindex?: boolean;
+  jsonLd?: object[];
+}
+
+const {
+  title,
+  description = siteConfig.description,
+  canonical,
+  ogType = 'website',
+  noindex = false,
+  jsonLd = [],
+} = Astro.props;
+
+const canonicalUrl = canonical
+  ? `https://www.${siteConfig.domain}${canonical}`
+  : Astro.url.href;
+---
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{title}</title>
+  <meta name="description" content={description} />
+  <link rel="canonical" href={canonicalUrl} />
+  {noindex && <meta name="robots" content="noindex, nofollow" />}
+
+  <!-- Open Graph -->
+  <meta property="og:title" content={title} />
+  <meta property="og:description" content={description} />
+  <meta property="og:type" content={ogType} />
+  <meta property="og:url" content={canonicalUrl} />
+  <meta property="og:site_name" content={siteConfig.name} />
+  <meta property="og:locale" content="fr_FR" />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+  <!-- Preconnect & Fonts — Playfair Display + Lato + JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800&family=Lato:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <!-- JSON-LD Structured Data -->
+  {jsonLd.map((schema) => (
+    <script type="application/ld+json" set:html={JSON.stringify(schema)} />
+  ))}
+</head>
+<body class="min-h-screen bg-gray-50 flex flex-col">
+  <!-- Header -->
+  <header class="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <a href="/" class="flex items-center gap-2 group">
+          <span class="text-2xl">{siteConfig.niche.emoji}</span>
+          <span class="font-bold text-lg text-gray-900 group-hover:text-brand-600 transition-colors">
+            {siteConfig.name}
+          </span>
+        </a>
+        <nav class="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600">
+          <a href="/" class="hover:text-brand-600 transition-colors">Accueil</a>
+          <a href="/annuaire" class="hover:text-brand-600 transition-colors">Annuaire</a>
+          <a href="/blog" class="hover:text-brand-600 transition-colors">Blog</a>
+          <a href="/devis" class="hover:text-brand-600 transition-colors">Devis</a>
+        </nav>
+        <a href="/devis" class="bg-brand-600 hover:bg-brand-700 text-white px-5 py-2.5 rounded-lg font-semibold text-sm transition-colors shadow-sm">
+          Devis Gratuit →
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main -->
+  <main class="flex-1 pt-16">
+    <slot />
+  </main>
+
+  <!-- Footer — Dark green -->
+  <footer class="bg-dark text-gray-300 py-12 mt-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid md:grid-cols-4 gap-8 mb-8">
+        <div>
+          <div class="flex items-center gap-2 mb-4">
+            <span class="text-2xl">{siteConfig.niche.emoji}</span>
+            <span class="text-white font-bold">{siteConfig.name}</span>
+          </div>
+          <p class="text-sm leading-relaxed">{siteConfig.tagline}</p>
+        </div>
+        <div>
+          <h4 class="text-white font-semibold mb-4">Guides</h4>
+          <ul class="space-y-2 text-sm">
+            <li><a href="/blog/prix-terrasse-2026" class="hover:text-white transition-colors">💰 Prix terrasse 2026</a></li>
+            <li><a href="/blog/choisir-terrassier" class="hover:text-white transition-colors">🔍 Choisir son terrassier</a></li>
+            <li><a href="/blog/comparer-devis-terrasse" class="hover:text-white transition-colors">📋 Comparer les devis</a></li>
+            <li><a href="/blog/aides-financieres-terrasse" class="hover:text-white transition-colors">🏛️ Aides financières</a></li>
+            <li><a href="/blog/erreurs-eviter-terrasse" class="hover:text-white transition-colors">⚠️ Erreurs à éviter</a></li>
+            <li><a href="/blog/entretien-terrasse" class="hover:text-white transition-colors">🧹 Entretien</a></li>
+            <li><a href="/blog/reglementation-terrasse" class="hover:text-white transition-colors">📜 Normes & règles</a></li>
+            <li><a href="/blog/tendances-terrasse-2026" class="hover:text-white transition-colors">✨ Tendances 2026</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="text-white font-semibold mb-4">Top Villes</h4>
+          <ul class="space-y-2 text-sm">
+            <li><a href="/paris" class="hover:text-white transition-colors">Terrasse Paris</a></li>
+            <li><a href="/marseille" class="hover:text-white transition-colors">Terrasse Marseille</a></li>
+            <li><a href="/lyon" class="hover:text-white transition-colors">Terrasse Lyon</a></li>
+            <li><a href="/toulouse" class="hover:text-white transition-colors">Terrasse Toulouse</a></li>
+            <li><a href="/bordeaux" class="hover:text-white transition-colors">Terrasse Bordeaux</a></li>
+            <li><a href="/nantes" class="hover:text-white transition-colors">Terrasse Nantes</a></li>
+            <li><a href="/lille" class="hover:text-white transition-colors">Terrasse Lille</a></li>
+            <li><a href="/annuaire" class="hover:text-white transition-colors font-semibold">Toutes les villes →</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="text-white font-semibold mb-4">Navigation</h4>
+          <ul class="space-y-2 text-sm">
+            <li><a href="/" class="hover:text-white transition-colors">Accueil</a></li>
+            <li><a href="/annuaire" class="hover:text-white transition-colors">Annuaire par ville</a></li>
+            <li><a href="/blog" class="hover:text-white transition-colors">Blog & Guides</a></li>
+            <li><a href="/devis" class="hover:text-white transition-colors">Demander un devis</a></li>
+            <li><a href="/mentions-legales" class="hover:text-white transition-colors">Mentions légales</a></li>
+          </ul>
+          <h4 class="text-white font-semibold mt-6 mb-3">Top Départements</h4>
+          <ul class="space-y-1 text-sm">
+            <li><a href="/departement/75" class="hover:text-white transition-colors">Paris (75)</a></li>
+            <li><a href="/departement/13" class="hover:text-white transition-colors">Bouches-du-Rhône (13)</a></li>
+            <li><a href="/departement/69" class="hover:text-white transition-colors">Rhône (69)</a></li>
+            <li><a href="/departement/33" class="hover:text-white transition-colors">Gironde (33)</a></li>
+            <li><a href="/departement/31" class="hover:text-white transition-colors">Haute-Garonne (31)</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="border-t border-green-800 pt-6 text-center text-xs">
+        <p>© {new Date().getFullYear()} {siteConfig.name} — Tous droits réservés. Les prix sont donnés à titre indicatif.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Sticky Mobile CTA -->
+  <div id="sticky-cta" class="fixed bottom-0 left-0 right-0 md:hidden z-40 bg-white border-t border-gray-200 p-3 shadow-xl sticky-cta-enter transition-transform duration-300" style="transform: translateY(100%);">
+    <a href="#devis-form" class="block w-full bg-brand-600 hover:bg-brand-700 text-white text-center py-3.5 rounded-xl font-bold text-base shadow-lg transition-all">
+      {siteConfig.niche.emoji} Devis Gratuit — Sans Engagement
+    </a>
+  </div>
+
+  <script is:inline>
+  (function() {
+    var cta = document.getElementById('sticky-cta');
+    if (!cta) return;
+
+    if (window.location.pathname === '/devis' || window.location.pathname === '/devis/') {
+      cta.style.display = 'none';
+      return;
+    }
+
+    var formVisible = false;
+    var scrolledPastHero = false;
+
+    function updateCTA() {
+      if (formVisible || !scrolledPastHero) {
+        cta.style.transform = 'translateY(100%)';
+      } else {
+        cta.style.transform = 'translateY(0)';
+      }
+    }
+
+    window.addEventListener('scroll', function() {
+      scrolledPastHero = window.scrollY > 300;
+      updateCTA();
+    }, { passive: true });
+
+    var formEl = document.getElementById('devis-form');
+    if (formEl && 'IntersectionObserver' in window) {
+      var observer = new IntersectionObserver(function(entries) {
+        formVisible = entries[0].isIntersecting;
+        updateCTA();
+      }, { threshold: 0.3 });
+      observer.observe(formEl);
+    }
+
+    cta.querySelector('a').addEventListener('click', function(e) {
+      if (formEl) {
+        e.preventDefault();
+        formEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    });
+  })();
+  </script>
+</body>
+</html>

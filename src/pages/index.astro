@@ -1,0 +1,209 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import QuoteWidget from '../components/QuoteWidget.astro';
+import PriceTable from '../components/PriceTable.astro';
+import ProcessSteps from '../components/ProcessSteps.astro';
+import FAQ from '../components/FAQ.astro';
+import { siteConfig } from '../../site.config';
+import { getAllCities, getAllDepartments } from '../lib/cities';
+import { blogArticles } from '../data/blog-articles';
+
+const topCities = getAllCities().slice(0, 20);
+const departments = getAllDepartments();
+const topDepartments = departments.slice(0, 12);
+
+const jsonLd = [
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": siteConfig.name,
+    "url": `https://www.${siteConfig.domain}`,
+    "description": siteConfig.description,
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": `https://www.${siteConfig.domain}/{search_term_string}`,
+      "query-input": "required name=search_term_string"
+    }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": siteConfig.faq.map(f => ({
+      "@type": "Question",
+      "name": f.q,
+      "acceptedAnswer": { "@type": "Answer", "text": f.a }
+    }))
+  }
+];
+---
+
+<BaseLayout
+  title={`${siteConfig.niche.heroTitle} | ${siteConfig.name}`}
+  description={siteConfig.description}
+  canonical="/"
+  jsonLd={jsonLd}
+>
+  <!-- Hero Section -->
+  <section class="relative text-white py-16 md:py-24 overflow-hidden">
+    <div class="absolute inset-0">
+      <img src="/images/hero-terrasse.png" alt="Terrasse en bois moderne avec vue sur jardin" class="w-full h-full object-cover" loading="eager" />
+      <div class="absolute inset-0 bg-gradient-to-r from-brand-900/90 via-brand-800/85 to-brand-700/80"></div>
+    </div>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+      <div class="grid lg:grid-cols-2 gap-12 items-center">
+        <div>
+          <div class="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full text-sm mb-6">
+            <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+            Service gratuit — Estimation immédiate
+          </div>
+          <h1 class="text-3xl md:text-5xl font-extrabold leading-tight mb-6">
+            {siteConfig.niche.heroTitle}
+          </h1>
+          <p class="text-lg text-lime-200 leading-relaxed mb-8 max-w-lg">
+            {siteConfig.niche.heroSubtitle}
+          </p>
+          <div class="flex flex-wrap gap-3">
+            {siteConfig.trustBadges.map((badge) => (
+              <span class="bg-white/10 backdrop-blur-sm border border-white/20 px-3 py-1.5 rounded-full text-sm font-medium">
+                ✓ {badge}
+              </span>
+            ))}
+          </div>
+        </div>
+        <div class="lg:block" id="devis-form">
+          <QuoteWidget keyword={siteConfig.niche.name} />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Intro Text -->
+  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="max-w-3xl mx-auto text-center">
+      <h2 class="text-2xl md:text-3xl font-bold text-gray-900 mb-6">
+        Pourquoi construire une terrasse ?
+      </h2>
+      <div class="text-gray-600 leading-relaxed space-y-4">
+        {siteConfig.introText.split('\n\n').map((paragraph) => (
+          <p>{paragraph}</p>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Why Choose Us -->
+  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
+    <div class="bg-brand-50 rounded-2xl p-6 md:p-8 border border-brand-100">
+      <h3 class="text-xl font-bold text-gray-900 mb-4">✅ Pourquoi utiliser notre comparateur ?</h3>
+      <div class="grid sm:grid-cols-2 gap-3">
+        {siteConfig.whyChooseUs.map((item) => (
+          <div class="flex items-start gap-3">
+            <span class="text-brand-600 mt-0.5 font-bold">→</span>
+            <span class="text-sm text-gray-700">{item}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Process -->
+  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <ProcessSteps />
+  </section>
+
+  <!-- Price Table -->
+  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <PriceTable />
+  </section>
+
+  <!-- Guides Section -->
+  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <h2 class="text-2xl font-bold text-gray-900 mb-2">
+      📚 Guides Terrasse
+    </h2>
+    <p class="text-gray-500 mb-6">Nos articles experts pour réussir votre projet de terrasse</p>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {blogArticles.slice(0, 8).map((article, i) => (
+        <a href={`/blog/${article.slug}`}
+          class={`bg-white border border-gray-200 rounded-xl overflow-hidden hover:border-brand-300 hover:shadow-lg transition-all group ${i < 2 ? 'sm:col-span-1 lg:col-span-2' : ''}`}>
+          <div class="aspect-[16/9] overflow-hidden">
+            <img src={article.image} alt={article.title} class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
+          </div>
+          <div class="p-4">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="text-xs font-medium text-brand-600 bg-brand-50 px-2 py-0.5 rounded-full">{article.category}</span>
+              <span class="text-xs text-gray-400">{article.readTime}</span>
+            </div>
+            <h3 class="font-bold text-gray-900 group-hover:text-brand-600 text-sm line-clamp-2">{article.title}</h3>
+          </div>
+        </a>
+      ))}
+    </div>
+    <div class="text-center mt-6">
+      <a href="/blog" class="text-brand-600 hover:text-brand-700 font-semibold text-sm transition-colors">
+        Voir tous les guides →
+      </a>
+    </div>
+  </section>
+
+  <!-- City Grid -->
+  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <h2 class="text-2xl font-bold text-gray-900 mb-2">
+      📍 {siteConfig.niche.nameShort} par ville
+    </h2>
+    <p class="text-gray-500 mb-6">Trouvez un terrassier qualifié près de chez vous</p>
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+      {topCities.map((city) => (
+        <a
+          href={`/${city.slug}`}
+          class="bg-white border border-gray-200 rounded-xl px-4 py-3 hover:border-brand-300 hover:shadow-md transition-all group text-center"
+        >
+          <span class="font-semibold text-gray-900 group-hover:text-brand-600 text-sm">{city.name}</span>
+          <span class="block text-xs text-gray-400 mt-0.5">{city.zip}</span>
+        </a>
+      ))}
+    </div>
+    <div class="text-center mt-6">
+      <a href="/annuaire" class="text-brand-600 hover:text-brand-700 font-semibold text-sm transition-colors">
+        Voir toutes les villes →
+      </a>
+    </div>
+  </section>
+
+  <!-- Top Departments -->
+  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <h2 class="text-2xl font-bold text-gray-900 mb-2">
+      🗺️ Top départements
+    </h2>
+    <p class="text-gray-500 mb-6">Les départements les plus demandés pour la construction de terrasse</p>
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+      {topDepartments.map((dept) => (
+        <a href={`/departement/${dept.code.toLowerCase()}`}
+          class="bg-white border border-gray-200 rounded-xl px-4 py-3 hover:border-brand-300 hover:shadow-md transition-all group text-center">
+          <span class="font-semibold text-gray-900 group-hover:text-brand-600 text-sm">{dept.name} ({dept.code})</span>
+          <span class="block text-xs text-gray-400 mt-0.5">{dept.count} villes • {dept.region}</span>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <FAQ items={siteConfig.faq} />
+  </section>
+
+  <!-- Final CTA -->
+  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="bg-gradient-to-r from-brand-600 to-brand-800 rounded-2xl p-8 md:p-12 text-center text-white">
+      <h2 class="text-2xl md:text-3xl font-bold mb-4">
+        Prêt à créer votre terrasse de rêve ?
+      </h2>
+      <p class="text-lime-200 mb-6 max-w-lg mx-auto">
+        Comparez les devis de 3 terrassiers qualifiés. C'est gratuit, rapide et sans engagement.
+      </p>
+      <a href="/devis" class="inline-block bg-white text-brand-700 font-bold px-8 py-4 rounded-xl hover:bg-brand-50 transition-colors shadow-lg text-lg">
+        {siteConfig.niche.emoji} Demander mes 3 devis gratuits
+      </a>
+    </div>
+  </section>
+</BaseLayout>
